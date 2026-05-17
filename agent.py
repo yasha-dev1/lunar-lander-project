@@ -206,4 +206,4 @@ class Agent:
     def choose_action(self, observation):
         obs = torch.from_numpy(np.asarray(observation, dtype=np.float32))[None, :]
         logits, _ = self.model(obs)
-        return int(logits.argmax(dim=-1).item())
+        return int(torch.distributions.Categorical(logits=logits).sample().item())
