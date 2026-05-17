@@ -10,4 +10,5 @@ venv/
 env/
 
 model.pt
+!submission/model.pt
 *.log
