@@ -33,6 +33,8 @@ def _mlp(in_dim, out_dim, hidden):
         nn.ReLU(),
         nn.Linear(hidden, hidden),
         nn.ReLU(),
+        nn.Linear(hidden, hidden),
+        nn.ReLU(),
         nn.Linear(hidden, out_dim),
     )
 
