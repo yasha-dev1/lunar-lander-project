@@ -48,9 +48,33 @@ class ActorCritic(nn.Module):
         self.reward_scale = reward_scale
         self.policy = _mlp(obs_dim, num_actions, hidden)
         self.value = _mlp(obs_dim, 1, hidden)
+        self.register_buffer("obs_mean", torch.zeros(obs_dim))
+        self.register_buffer("obs_var", torch.ones(obs_dim))
+        self.register_buffer("obs_count", torch.tensor(1e-4))
 
     def forward(self, obs):
+        obs = (obs - self.obs_mean) / torch.sqrt(self.obs_var + 1e-8)
+        obs = obs.clamp(-10.0, 10.0)
         return self.policy(obs), self.value(obs).squeeze(-1)
+
+    def update_obs_stats(self, batch_obs):
+        """Welford-style running mean/var update from a (..., obs_dim) batch."""
+        flat = batch_obs.reshape(-1, self.obs_dim)
+        batch_count = float(flat.shape[0])
+        batch_mean = flat.mean(dim=0)
+        batch_var = flat.var(dim=0, unbiased=False)
+
+        delta = batch_mean - self.obs_mean
+        tot_count = self.obs_count + batch_count
+        new_mean = self.obs_mean + delta * (batch_count / tot_count)
+        m_a = self.obs_var * self.obs_count
+        m_b = batch_var * batch_count
+        M2 = m_a + m_b + delta.pow(2) * (self.obs_count * batch_count / tot_count)
+        new_var = M2 / tot_count
+
+        self.obs_mean.copy_(new_mean)
+        self.obs_var.copy_(new_var)
+        self.obs_count.fill_(tot_count.item() if torch.is_tensor(tot_count) else tot_count)
 
 
 def train(make_env, time_budget_s: float, seed: int = 0, save_path: str = MODEL_PATH):
@@ -116,6 +140,8 @@ def train(make_env, time_budget_s: float, seed: int = 0, save_path: str = MODEL_
 
         model.train()
         obs = torch.from_numpy(obs_buf)
+        with torch.no_grad():
+            model.update_obs_stats(obs)
         actions_t = torch.from_numpy(act_buf).long()
         rewards = torch.from_numpy(rew_buf) / model.reward_scale
         is_done = torch.from_numpy(done_buf)
