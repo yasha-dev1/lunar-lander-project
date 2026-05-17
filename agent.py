@@ -38,7 +38,7 @@ def _mlp(in_dim, out_dim, hidden):
 class ActorCritic(nn.Module):
     """Minimal actor-critic for discrete actions: two 1-hidden-layer MLPs."""
 
-    def __init__(self, obs_dim=8, num_actions=4, hidden=128,
+    def __init__(self, obs_dim=8, num_actions=4, hidden=256,
                  gamma=0.99, reward_scale=10.0):
         super().__init__()
         self.obs_dim = obs_dim
