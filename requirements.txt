@@ -1,0 +1,8 @@
+gymnasium[box2d]==1.2.1
+swig==4.4.1
+box2d-py==2.3.5
+pygame==2.6.1
+numpy==2.2.6
+torch==2.9.1
+matplotlib==3.10.8
+psutil==5.9.8
