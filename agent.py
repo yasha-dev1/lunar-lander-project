@@ -169,6 +169,7 @@ def train(make_env, time_budget_s: float, seed: int = 0, save_path: str = MODEL_
         loss = policy_loss + value_coef * value_loss - entropy_coef * entropy
         optimizer.zero_grad()
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=0.5)
         optimizer.step()
 
         if it % 50 == 0:
